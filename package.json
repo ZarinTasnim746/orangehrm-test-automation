@@ -1,0 +1,25 @@
+{
+  "name": "orangehrm-assignment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test:ui": "playwright test",
+    "test:ui:report": "playwright show-report",
+    "test:login": "playwright test tests/login.spec.ts",
+    "test:pim": "playwright test tests/pim.spec.ts",
+    "test:admin": "playwright test tests/admin.spec.ts",
+    "test:leave": "playwright test tests/leave.spec.ts",
+    "test:api": "newman run postman/jsonplaceholder-users.postman_collection.json --reporters cli,htmlextra --reporter-htmlextra-export reports/api-report.html",
+    "test:all": "npm run test:ui && npm run test:api"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.2",
+    "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
