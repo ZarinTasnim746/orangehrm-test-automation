@@ -1,130 +1,99 @@
 # OrangeHRM Test Automation Assignment
 
-End-to-end QA assignment covering UI automation, manual testing, and API automation against:
-- UI: [OrangeHRM demo](https://opensource-demo.orangehrmlive.com/web/index.php/auth/login)
+This is my project assignment for QA automation. It covers UI testing with Playwright, some manual test cases, and API testing with Postman.
+
+- UI site: [OrangeHRM demo](https://opensource-demo.orangehrmlive.com/web/index.php/auth/login)
 - API: [JSONPlaceholder](https://jsonplaceholder.typicode.com/users)
 
-## Project overview
+## What's in this project
 
-| Part | What it covers | Where |
-|---|---|---|
-| A — UI Automation | Login, PIM, Admin, Leave scenarios (Q1–Q4) | `tests/` |
-| B — Manual Testing | 15 manual test cases + 1 bug report, complementing Part A | `manual-tests/` |
-| C — GitHub Workflow | This repo, its commit history, and this README | — |
-| D — API Automation | Postman/Newman collection against JSONPlaceholder | `postman/` |
+- **Part A - UI automation**: `tests/` folder, 4 test files (Q1 to Q4)
+- **Part B - Manual testing**: `manual-tests/` folder, test cases in a CSV file + 1 bug report
+- **Part C - GitHub**: this repo + commits
+- **Part D - API automation**: `postman/` folder, Postman collection for the JSONPlaceholder API
 
-## Tech stack
+## Tools used
 
-- **UI automation:** [Playwright](https://playwright.dev/) (TypeScript) using the Page Object Model — one Page Object per module (`LoginPage`, `PIMPage`, `AdminPage`, `LeavePage`) under `tests/pages/`.
-- **API automation:** [Postman](https://www.postman.com/) collection, run headlessly via [Newman](https://github.com/postmanlabs/newman) with the `newman-reporter-htmlextra` HTML reporter.
-- **CI:** GitHub Actions (`.github/workflows/playwright.yml`) runs both suites on every push/PR.
+- Playwright with TypeScript for the UI tests (using Page Object Model, one file per page in `tests/pages/`)
+- Postman + Newman for the API tests
+- GitHub Actions for CI (runs the tests automatically when I push)
 
-## Setup
+## How to run it
+
+First install everything:
 
 ```bash
 npm install
 npx playwright install --with-deps chromium
 ```
 
-> Node.js 18+ is recommended. Tests run headless by default (Playwright's own bundled Chromium — no manual browser setup needed).
+### Running the UI tests
 
-## Running the UI suite (Part A)
-
-Each scenario runs independently, and all four run together as one suite.
+You can run all 4 tests together:
 
 ```bash
-# All four scenarios together, in one run
 npm run test:ui
-
-# Individually
-npm run test:login    # Q1 - invalid login
-npm run test:pim      # Q2 - add & search employee in PIM
-npm run test:admin    # Q3 - search/edit/verify user in Admin
-npm run test:leave    # Q4 - apply, verify, cancel leave
 ```
 
-Equivalent raw Playwright commands:
+Or run one at a time:
 
 ```bash
-npx playwright test --project=chromium                 # all four
-npx playwright test tests/login.spec.ts --project=chromium
-npx playwright test tests/pim.spec.ts --project=chromium
-npx playwright test tests/admin.spec.ts --project=chromium
-npx playwright test tests/leave.spec.ts --project=chromium
+npm run test:login    # Q1
+npm run test:pim      # Q2
+npm run test:admin    # Q3
+npm run test:leave    # Q4
 ```
 
-### Generating / viewing the UI report
-
-An HTML report is generated automatically after every run (`playwright.config.ts` → `reporter: 'html'`).
+To see the report after running:
 
 ```bash
-npm run test:ui:report
-# or
 npx playwright show-report
 ```
 
-## Running the API suite (Part D)
-
-The Postman collection (`postman/jsonplaceholder-users.postman_collection.json`) is run from the command line via Newman:
+### Running the API tests
 
 ```bash
 npm run test:api
 ```
 
-This runs the collection and writes an HTML report to `reports/api-report.html` (via `newman-reporter-htmlextra`), alongside CLI output. Every request validates its status code; the second request additionally validates that the returned `id` matches the one captured from the first request, and that `phone` is present and non-empty.
+This runs the Postman collection using Newman and creates an HTML report in `reports/api-report.html`. It checks the status codes and also checks the response data (like the id and phone number).
 
-To run the collection with the plain Postman CLI/Newman directly:
-
-```bash
-npx newman run postman/jsonplaceholder-users.postman_collection.json
-```
-
-## Running everything together
+### Run everything
 
 ```bash
 npm run test:all
 ```
 
-Runs the full UI suite followed by the API suite in one command — matching the "all scenarios runnable individually and together" requirement.
+This runs the UI tests first then the API tests.
 
-## Part B — Manual Testing
+## Part B - Manual testing
 
-See [`manual-tests/README.md`](manual-tests/README.md) for the test case sheet (`test-cases.csv`) and the bug report (`bug-report.md`). These cases deliberately cover scenarios (empty-field validation, special characters, boundary/edge cases, unauthorized access, session behavior) not already exercised by the Part A automation.
+I put the manual test cases in `manual-tests/test-cases.csv`. There's also a bug report in `manual-tests/bug-report.md` for a bug I found while testing the Leave page. More info in `manual-tests/README.md`.
 
-## CI
+I tried to write test cases for things that weren't already covered by the automated tests, like empty fields, special characters, and some edge cases.
 
-GitHub Actions (`.github/workflows/playwright.yml`) installs dependencies, runs the Chromium UI suite, runs the Newman API suite, and uploads both HTML reports as build artifacts on every push and pull request to `main`/`master`.
+## A few notes / issues I ran into
 
-## Known limitation
+The OrangeHRM demo site is a public site that lots of people use for practice, so sometimes it's slow or the test data changes while I'm testing (like the leave balance running out, or dropdown values being different each time). I tried to make the tests handle this better:
 
-`opensource-demo.orangehrmlive.com` is a public, shared demo instance used concurrently by many learners, which surfaces a few environment-level quirks unrelated to the automation logic itself:
+- The date fields on the Leave page sometimes show `yyyy-mm-dd` format and sometimes `yyyy-dd-mm` - my code checks which one it is before typing the date
+- If the leave type I picked has no balance left, the test tries other leave types instead
+- Sometimes Q3 and Q4 fail because the site is slow/busy with other people using it, not because of a bug in my code. Running it again usually works.
 
-- Under heavy concurrent load, dropdown/autocomplete responses (Admin > Add User, Leave > Apply) can become slow, or the shared `Admin` account's linked employee data can shift mid-run, causing Q3/Q4 to occasionally time out. Re-running usually succeeds once the shared instance is less busy.
-- The Leave module's date fields have been observed with **both** `yyyy-mm-dd` and `yyyy-dd-mm` placeholder orders depending on session/locale. `LeavePage.ts` reads the actual placeholder at runtime and reorders the typed date to match, rather than assuming a fixed format.
-- The set of Leave Types configured with a positive balance on the shared `Admin` account fluctuates (and can be fully exhausted, i.e. every type at `0.00 Day(s)`, since many learners submit leave requests against the same shared entitlements). `LeavePage.ts` picks whichever available type actually has a usable balance, falling back to a Half Day request if no type has a full day available, and raises a clear error if none has any balance at all.
-
-## Project structure
+## Project files
 
 ```
-.
-├── tests/
-│   ├── login.spec.ts       # Q1
-│   ├── pim.spec.ts         # Q2
-│   ├── admin.spec.ts       # Q3
-│   ├── leave.spec.ts       # Q4
-│   └── pages/               # Page Objects
-│       ├── LoginPage.ts
-│       ├── PIMPage.ts
-│       ├── AdminPage.ts
-│       └── LeavePage.ts
-├── postman/
-│   └── jsonplaceholder-users.postman_collection.json
-├── manual-tests/
-│   ├── test-cases.csv
-│   ├── bug-report.md
-│   └── README.md
-├── playwright.config.ts
-└── package.json
+tests/
+  login.spec.ts    -> Q1
+  pim.spec.ts      -> Q2
+  admin.spec.ts    -> Q3
+  leave.spec.ts    -> Q4
+  pages/           -> page objects
+postman/
+  jsonplaceholder-users.postman_collection.json
+manual-tests/
+  test-cases.csv
+  bug-report.md
+playwright.config.ts
+package.json
 ```
-
-<!-- last updated: 2026-09-12T09:03:31Z -->
