@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "JSONPlaceholder Users API",
+    "description": "Part D API Automation: GET all users, extract an id, then PUT an update to that user and validate the response.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://jsonplaceholder.typicode.com"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "selectedUser",
+      "value": ""
+    },
+    {
+      "key": "dynamicName",
+      "value": ""
+    },
+    {
+      "key": "dynamicEmail",
+      "value": ""
+    },
+    {
+      "key": "dynamicCompanyName",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Get All Users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains user data (non-empty array)', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "    pm.expect(jsonData.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test('Each user object includes id, name, and email', function () {",
+              "    const jsonData = pm.response.json();",
+              "    jsonData.forEach(function (user) {",
+              "        pm.expect(user).to.have.property('id');",
+              "        pm.expect(user).to.have.property('name');",
+              "        pm.expect(user).to.have.property('email');",
+              "    });",
+              "});",
+              "",
+              "// Extract one user's id (and the full record) for the next request",
+              "const jsonData = pm.response.json();",
+              "const selectedUser = jsonData[0];",
+              "pm.collectionVariables.set('userId', selectedUser.id);",
+              "pm.collectionVariables.set('selectedUser', JSON.stringify(selectedUser));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update User by ID",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{updatedUserPayload}}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const selectedUser = JSON.parse(pm.collectionVariables.get('selectedUser'));",
+              "const timestamp = Date.now();",
+              "",
+              "const dynamicName = 'Updated User ' + timestamp;",
+              "const dynamicEmail = 'updated' + timestamp + '@example.com';",
+              "const dynamicCompanyName = 'Updated Co ' + timestamp;",
+              "",
+              "// Update only name, email, and company.name -- keep every other field",
+              "// (including phone) intact so it survives the round trip, since",
+              "// JSONPlaceholder's mock PUT echoes back exactly what is sent.",
+              "selectedUser.name = dynamicName;",
+              "selectedUser.email = dynamicEmail;",
+              "selectedUser.company.name = dynamicCompanyName;",
+              "",
+              "pm.collectionVariables.set('updatedUserPayload', JSON.stringify(selectedUser));",
+              "pm.collectionVariables.set('dynamicName', dynamicName);",
+              "pm.collectionVariables.set('dynamicEmail', dynamicEmail);",
+              "pm.collectionVariables.set('dynamicCompanyName', dynamicCompanyName);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returned id matches the stored variable', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.id).to.eql(parseInt(pm.collectionVariables.get('userId')));",
+              "});",
+              "",
+              "pm.test('Phone field is not empty', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.phone).to.exist;",
+              "    pm.expect(jsonData.phone).to.not.equal('');",
+              "});",
+              "",
+              "pm.test('Name, email and company.name were updated dynamically', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.eql(pm.collectionVariables.get('dynamicName'));",
+              "    pm.expect(jsonData.email).to.eql(pm.collectionVariables.get('dynamicEmail'));",
+              "    pm.expect(jsonData.company.name).to.eql(pm.collectionVariables.get('dynamicCompanyName'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
