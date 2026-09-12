@@ -15,14 +15,11 @@ export class LeavePage {
     await this.page.waitForLoadState('domcontentloaded');
     await this.page.waitForTimeout(1000);
 
-    // pick a leave type that actually has balance left (the demo data keeps changing)
     const balance = await this.selectLeaveTypeWithBalance(leaveType);
 
     const dateInputs = this.page.locator('.oxd-date-input input');
     await dateInputs.first().waitFor({ state: 'visible', timeout: 15000 });
 
-    // the date placeholder format changes sometimes (yyyy-mm-dd vs yyyy-dd-mm)
-    // so we check it before typing
     await dateInputs.nth(0).click({ clickCount: 3 });
     await dateInputs.nth(0).type(await this.formatForField(dateInputs.nth(0), fromDate));
 
@@ -30,7 +27,6 @@ export class LeavePage {
     await dateInputs.nth(1).type(await this.formatForField(dateInputs.nth(1), toDate));
     await this.page.waitForTimeout(500);
 
-    // if balance is less than 1 day, switch to half day so it doesn't get rejected
     if (balance < 1 && balance > 0) {
       const durationSelect = this.page.locator('.oxd-select-text-input').last();
       if (await durationSelect.isVisible().catch(() => false)) {
@@ -52,7 +48,6 @@ export class LeavePage {
     await this.page.waitForTimeout(1000);
   }
 
-  // tries the leave type we want first, if it has 0 balance it tries the others
   private async selectLeaveTypeWithBalance(preferredType: string): Promise<number> {
     await this.page.locator('.oxd-select-text-input').first().click();
     await this.page.waitForTimeout(500);
@@ -100,7 +95,6 @@ export class LeavePage {
     throw new Error('No leave type with balance available right now, try again later');
   }
 
-  // reorders the date string to match whatever format the field wants
   private async formatForField(field: Locator, isoDate: string): Promise<string> {
     const placeholder = (await field.getAttribute('placeholder')) || 'yyyy-mm-dd';
     const [year, month, day] = isoDate.split('-');
