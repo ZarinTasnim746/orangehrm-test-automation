@@ -64,6 +64,13 @@ await dateInput.type(newDate);
 ```
 This is not something an average manual tester or end user would intuitively do.
 
+## Screenshot
+![To Date field showing the corrupted concatenated value](screenshots/BUG-01-todate-concatenation.png)
+
+The To Date field visibly reads `...26-11-102026-11-15` — the tail end of the original auto-populated value concatenated with the newly typed date, confirming the defect described above.
+
+## Related finding: locale-dependent date order
+While reproducing this defect, the date fields' expected input order was also observed to vary between sessions: `placeholder="yyyy-mm-dd"` in some sessions and `placeholder="yyyy-dd-mm"` in others (screenshot above shows the `yyyy-dd-mm` variant). This is not necessarily a defect on its own, but it means any automation or manual data entry that assumes a fixed `yyyy-mm-dd` order can silently submit an unintended (but still calendar-valid) date if day and month differ, since the wrong characters land in the wrong position. The Part A automation (`tests/pages/LeavePage.ts`) now reads each field's actual placeholder at runtime and reorders the typed value accordingly, rather than assuming a fixed format.
+
 ## Notes
-- This defect is independent of and not covered by the Part A UI automation, which works around it deliberately (see `tests/pages/LeavePage.ts`).
-- A live screenshot capture was attempted for this report but the shared public demo instance was intermittently slow/unresponsive at the time of writing (shared, multi-tenant demo environment used concurrently by many other learners). The defect is instead documented with exact captured field values from live automated execution, which is a more precise record of the underlying data-level defect than a screenshot would be (the visual rendering can appear to truncate/look normal even when the underlying value is corrupted).
+This defect is independent of and not covered by the Part A UI automation, which works around it deliberately (see `tests/pages/LeavePage.ts`, `formatForField` / triple-click-before-type).
