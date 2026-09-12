@@ -2,11 +2,11 @@
 # Playwright
 node_modules/
 /test-results/
-/playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
 
-# Newman / API reports
-/reports/
-newman/
+# Note: /playwright-report/ and /reports/ (Newman) are intentionally
+# tracked -- a generated report snapshot ships in the repo per the
+# assignment's requirement that the repo contain reports. Re-run the
+# suites (see README) to regenerate a fresh copy locally.
