@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "JSONPlaceholder Users API",
-    "description": "Part D API Automation: GET all users, extract an id, then PUT an update to that user and validate the response.",
+    "description": "Testing the JSONPlaceholder users API - getting all users, then updating one user's info.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -38,8 +38,12 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/users",
-          "host": ["{{baseUrl}}"],
-          "path": ["users"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
         }
       },
       "event": [
@@ -67,7 +71,7 @@
               "    });",
               "});",
               "",
-              "// Extract one user's id (and the full record) for the next request",
+              "// save the id and user data for the next request",
               "const jsonData = pm.response.json();",
               "const selectedUser = jsonData[0];",
               "pm.collectionVariables.set('userId', selectedUser.id);",
@@ -93,8 +97,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/users/{{userId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["users", "{{userId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{userId}}"
+          ]
         }
       },
       "event": [
@@ -110,9 +119,9 @@
               "const dynamicEmail = 'updated' + timestamp + '@example.com';",
               "const dynamicCompanyName = 'Updated Co ' + timestamp;",
               "",
-              "// Update only name, email, and company.name -- keep every other field",
-              "// (including phone) intact so it survives the round trip, since",
-              "// JSONPlaceholder's mock PUT echoes back exactly what is sent.",
+              "// only changing name, email and company name",
+              "// keeping the rest of the fields (like phone) the same",
+              "// so they don't disappear from the response",
               "selectedUser.name = dynamicName;",
               "selectedUser.email = dynamicEmail;",
               "selectedUser.company.name = dynamicCompanyName;",
