@@ -122,3 +122,5 @@ GitHub Actions (`.github/workflows/playwright.yml`) installs dependencies, runs 
 ├── playwright.config.ts
 └── package.json
 ```
+
+<!-- last updated: 2026-09-12T09:03:31Z -->
