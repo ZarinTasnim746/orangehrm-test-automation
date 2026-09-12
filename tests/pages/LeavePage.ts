@@ -15,13 +15,14 @@ export class LeavePage {
     await this.page.waitForLoadState('domcontentloaded');
     await this.page.waitForTimeout(1000);
 
+    // pick a leave type that actually has balance left (the demo data keeps changing)
     const balance = await this.selectLeaveTypeWithBalance(leaveType);
 
-    // Structural selector -- resilient to the placeholder's date-format text,
-    // which is locale-dependent (observed both "yyyy-mm-dd" and "yyyy-dd-mm").
     const dateInputs = this.page.locator('.oxd-date-input input');
     await dateInputs.first().waitFor({ state: 'visible', timeout: 15000 });
 
+    // the date placeholder format changes sometimes (yyyy-mm-dd vs yyyy-dd-mm)
+    // so we check it before typing
     await dateInputs.nth(0).click({ clickCount: 3 });
     await dateInputs.nth(0).type(await this.formatForField(dateInputs.nth(0), fromDate));
 
@@ -29,8 +30,7 @@ export class LeavePage {
     await dateInputs.nth(1).type(await this.formatForField(dateInputs.nth(1), toDate));
     await this.page.waitForTimeout(500);
 
-    // If the available balance can't cover a Full Day, switch Duration to
-    // Half Day Morning so the request matches what's actually available.
+    // if balance is less than 1 day, switch to half day so it doesn't get rejected
     if (balance < 1 && balance > 0) {
       const durationSelect = this.page.locator('.oxd-select-text-input').last();
       if (await durationSelect.isVisible().catch(() => false)) {
@@ -52,13 +52,7 @@ export class LeavePage {
     await this.page.waitForTimeout(1000);
   }
 
-  /**
-   * Select a leave type that actually has a positive balance, returning that
-   * balance. The preferred type is tried first; the full set of configured
-   * types (and their balances) on this shared demo account fluctuates, so if
-   * the preferred type is unavailable or has a zero balance, the type with
-   * the largest available positive balance is used instead.
-   */
+  // tries the leave type we want first, if it has 0 balance it tries the others
   private async selectLeaveTypeWithBalance(preferredType: string): Promise<number> {
     await this.page.locator('.oxd-select-text-input').first().click();
     await this.page.waitForTimeout(500);
@@ -103,16 +97,10 @@ export class LeavePage {
       return best.balance;
     }
 
-    throw new Error('No leave type with a positive balance is available to apply for.');
+    throw new Error('No leave type with balance available right now, try again later');
   }
 
-  /**
-   * The date field's expected input order is locale-dependent (its
-   * placeholder has been observed as both "yyyy-mm-dd" and "yyyy-dd-mm").
-   * Re-order the given ISO (yyyy-mm-dd) date to match whatever order this
-   * specific field actually expects, so day/month are never silently
-   * swapped into a different (but still valid) date.
-   */
+  // reorders the date string to match whatever format the field wants
   private async formatForField(field: Locator, isoDate: string): Promise<string> {
     const placeholder = (await field.getAttribute('placeholder')) || 'yyyy-mm-dd';
     const [year, month, day] = isoDate.split('-');

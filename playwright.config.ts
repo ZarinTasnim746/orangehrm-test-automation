@@ -1,12 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import fs from 'fs';
 
-/**
- * Optional local override: if a machine-specific Chrome for Testing binary
- * exists at this path, use it. Falls back to Playwright's bundled browser
- * everywhere else (CI, other machines) so the suite runs out of the box
- * after `npx playwright install`.
- */
+// use my local chrome if it exists, otherwise playwright will use its own
 const localChromePath =
   '/Users/saiful/playwright-chrome/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
 const executablePath = fs.existsSync(localChromePath) ? localChromePath : undefined;
@@ -32,7 +27,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Run tests sequentially to avoid resource contention against the shared demo site */
+  /* running one at a time so it doesn't overload the shared demo site */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
@@ -45,7 +40,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
-  /* Chromium only -- the suite is built and verified against Chromium. */
+  /* only testing with chromium for now */
   projects: [
     {
       name: 'chromium',
