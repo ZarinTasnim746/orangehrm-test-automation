@@ -97,7 +97,11 @@ GitHub Actions (`.github/workflows/playwright.yml`) installs dependencies, runs 
 
 ## Known limitation
 
-`opensource-demo.orangehrmlive.com` is a public, shared demo instance used concurrently by many learners. Under heavy concurrent load its dropdown/autocomplete responses (Admin > Add User, Leave > Apply) can become slow or the shared `Admin` account's linked data can shift mid-run, causing Q3/Q4 to occasionally time out even though the automation logic is correct. Re-running usually succeeds once the shared instance is less busy.
+`opensource-demo.orangehrmlive.com` is a public, shared demo instance used concurrently by many learners, which surfaces a few environment-level quirks unrelated to the automation logic itself:
+
+- Under heavy concurrent load, dropdown/autocomplete responses (Admin > Add User, Leave > Apply) can become slow, or the shared `Admin` account's linked employee data can shift mid-run, causing Q3/Q4 to occasionally time out. Re-running usually succeeds once the shared instance is less busy.
+- The Leave module's date fields have been observed with **both** `yyyy-mm-dd` and `yyyy-dd-mm` placeholder orders depending on session/locale. `LeavePage.ts` reads the actual placeholder at runtime and reorders the typed date to match, rather than assuming a fixed format.
+- The set of Leave Types configured with a positive balance on the shared `Admin` account fluctuates (and can be fully exhausted, i.e. every type at `0.00 Day(s)`, since many learners submit leave requests against the same shared entitlements). `LeavePage.ts` picks whichever available type actually has a usable balance, falling back to a Half Day request if no type has a full day available, and raises a clear error if none has any balance at all.
 
 ## Project structure
 
